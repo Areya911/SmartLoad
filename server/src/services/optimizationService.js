@@ -6,38 +6,50 @@ exports.optimizeShipments = async () => {
   const shipments = await Shipment.find({ status: "pending" });
   const trucks = await Truck.find({ isAvailable: true });
 
+  // 🔁 Track remaining capacity in memory
+  const truckState = trucks.map((truck) => ({
+    truck,
+    remainingWeight: truck.capacityWeight,
+    remainingVolume: truck.capacityVolume
+  }));
+
   const assignments = [];
 
   for (let shipment of shipments) {
-    // find suitable truck index
-    const truckIndex = trucks.findIndex(
-      (truck) =>
-        truck.capacityWeight >= shipment.weight &&
-        truck.capacityVolume >= shipment.volume
+    // find a truck that can still fit this shipment
+    const suitable = truckState.find(
+      (t) =>
+        t.remainingWeight >= shipment.weight &&
+        t.remainingVolume >= shipment.volume
     );
 
-    if (truckIndex === -1) {
-      // no truck available for this shipment
+    if (!suitable) {
+      // no truck can handle this shipment
       continue;
     }
-
-    const suitableTruck = trucks[truckIndex];
 
     // create booking
     const booking = await Booking.create({
       shipment: shipment._id,
-      truck: suitableTruck._id
+      truck: suitable.truck._id
     });
 
-    // update states
+    // update shipment
     shipment.status = "assigned";
-    suitableTruck.isAvailable = false;
-
     await shipment.save();
-    await suitableTruck.save();
 
-    // remove truck from memory so it can't be reused
-    trucks.splice(truckIndex, 1);
+    // reduce truck capacity
+    suitable.remainingWeight -= shipment.weight;
+    suitable.remainingVolume -= shipment.volume;
+
+    // if truck is effectively full, mark unavailable
+    if (
+      suitable.remainingWeight === 0 ||
+      suitable.remainingVolume === 0
+    ) {
+      suitable.truck.isAvailable = false;
+      await suitable.truck.save();
+    }
 
     assignments.push(booking);
   }
