@@ -2,53 +2,74 @@ const Truck = require("../models/Truck");
 const Shipment = require("../models/Shipment");
 const Booking = require("../models/Booking");
 
+const UTILIZATION_CAP = 0.85;
+
 exports.optimizeShipments = async () => {
   const shipments = await Shipment.find({ status: "pending" });
   const trucks = await Truck.find({ isAvailable: true });
 
-  // 🔁 Track remaining capacity in memory
+  // Track remaining usable capacity in memory
   const truckState = trucks.map((truck) => ({
     truck,
-    remainingWeight: truck.capacityWeight,
-    remainingVolume: truck.capacityVolume
+    maxUsableWeight: truck.capacityWeight * UTILIZATION_CAP,
+    maxUsableVolume: truck.capacityVolume * UTILIZATION_CAP,
+    usedWeight: 0,
+    usedVolume: 0
   }));
 
   const assignments = [];
 
   for (let shipment of shipments) {
-    // find a truck that can still fit this shipment
-    const suitable = truckState.find(
-      (t) =>
-        t.remainingWeight >= shipment.weight &&
-        t.remainingVolume >= shipment.volume
-    );
+    let bestTruck = null;
+    let bestScore = Infinity;
 
-    if (!suitable) {
-      // no truck can handle this shipment
+    for (let t of truckState) {
+      const newUsedWeight = t.usedWeight + shipment.weight;
+      const newUsedVolume = t.usedVolume + shipment.volume;
+
+      // 🚧 Safety + capacity check
+      if (
+        newUsedWeight <= t.maxUsableWeight &&
+        newUsedVolume <= t.maxUsableVolume
+      ) {
+        const weightLeft = t.maxUsableWeight - newUsedWeight;
+        const volumeLeft = t.maxUsableVolume - newUsedVolume;
+
+        const score = weightLeft + volumeLeft;
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestTruck = t;
+        }
+      }
+    }
+
+    if (!bestTruck) {
+      // No safe truck for this shipment
       continue;
     }
 
-    // create booking
+    // Create booking
     const booking = await Booking.create({
       shipment: shipment._id,
-      truck: suitable.truck._id
+      truck: bestTruck.truck._id
     });
 
-    // update shipment
+    // Update shipment
     shipment.status = "assigned";
     await shipment.save();
 
-    // reduce truck capacity
-    suitable.remainingWeight -= shipment.weight;
-    suitable.remainingVolume -= shipment.volume;
+    // Update in-memory truck usage
+    bestTruck.usedWeight += shipment.weight;
+    bestTruck.usedVolume += shipment.volume;
 
-    // if truck is effectively full, mark unavailable
+    // If truck hits utilization cap, mark unavailable
     if (
-      suitable.remainingWeight === 0 ||
-      suitable.remainingVolume === 0
+      bestTruck.usedWeight >= bestTruck.maxUsableWeight ||
+      bestTruck.usedVolume >= bestTruck.maxUsableVolume
     ) {
-      suitable.truck.isAvailable = false;
-      await suitable.truck.save();
+      bestTruck.truck.isAvailable = false;
+      await bestTruck.truck.save();
     }
 
     assignments.push(booking);
