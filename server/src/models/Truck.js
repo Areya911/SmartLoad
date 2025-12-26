@@ -29,7 +29,16 @@ const truckSchema = new mongoose.Schema(
     isAvailable: {
       type: Boolean,
       default: true
+    },
+    currentLocation: {
+    lat: Number,
+    lng: Number
+    },
+    averageSpeedKmph: {
+    type: Number,
+    default: 50
     }
+
   },
   { timestamps: true }
 );

@@ -2,50 +2,78 @@ const Truck = require("../models/Truck");
 const Shipment = require("../models/Shipment");
 const Booking = require("../models/Booking");
 
-const UTILIZATION_CAP = 0.85;
+const UTILIZATION_CAPS = {
+  open: 0.9,
+  container: 0.85,
+  refrigerated: 0.75
+};
 
-exports.optimizeShipments = async () => {
+const DRIVER_PENALTY = {
+  low: 0,
+  medium: 500,
+  high: 1500
+};
+
+exports.optimizeShipmentsWithExplainability = async () => {
   const shipments = await Shipment.find({ status: "pending" });
   const trucks = await Truck.find({ isAvailable: true });
 
-  // Track remaining usable capacity in memory
   const truckState = trucks.map((truck) => ({
     truck,
-    maxUsableWeight: truck.capacityWeight * UTILIZATION_CAP,
-    maxUsableVolume: truck.capacityVolume * UTILIZATION_CAP,
     usedWeight: 0,
-    usedVolume: 0
+    usedVolume: 0,
+    maxWeight: truck.capacityWeight * UTILIZATION_CAPS[truck.truckType],
+    maxVolume: truck.capacityVolume * UTILIZATION_CAPS[truck.truckType],
+    driverFatigue: truck.driverFatigue || "low"
   }));
 
   const assignments = [];
+  const explanations = [];
 
   for (let shipment of shipments) {
     let bestTruck = null;
     let bestScore = Infinity;
+    const evaluated = [];
 
     for (let t of truckState) {
-      const newUsedWeight = t.usedWeight + shipment.weight;
-      const newUsedVolume = t.usedVolume + shipment.volume;
+      const newWeight = t.usedWeight + shipment.weight;
+      const newVolume = t.usedVolume + shipment.volume;
 
-      // 🚧 Safety + capacity check
-      if (
-        newUsedWeight <= t.maxUsableWeight &&
-        newUsedVolume <= t.maxUsableVolume
-      ) {
-        const weightLeft = t.maxUsableWeight - newUsedWeight;
-        const volumeLeft = t.maxUsableVolume - newUsedVolume;
+      // ❌ Capacity or safety violation
+      if (newWeight > t.maxWeight || newVolume > t.maxVolume) {
+        evaluated.push({
+          truckId: t.truck._id,
+          truckType: t.truck.truckType,
+          reason: "Rejected",
+          details: "Exceeds safety utilization limit"
+        });
+        continue;
+      }
 
-        const score = weightLeft + volumeLeft;
+      const wasteScore =
+        (t.maxWeight - newWeight) +
+        (t.maxVolume - newVolume) +
+        DRIVER_PENALTY[t.driverFatigue];
 
-        if (score < bestScore) {
-          bestScore = score;
-          bestTruck = t;
-        }
+      evaluated.push({
+        truckId: t.truck._id,
+        truckType: t.truck.truckType,
+        reason: "Considered",
+        details: `Waste score = ${wasteScore}`
+      });
+
+      if (wasteScore < bestScore) {
+        bestScore = wasteScore;
+        bestTruck = t;
       }
     }
 
     if (!bestTruck) {
-      // No safe truck for this shipment
+      explanations.push({
+        shipmentId: shipment._id,
+        evaluatedTrucks: evaluated,
+        finalDecision: "No suitable truck found"
+      });
       continue;
     }
 
@@ -55,25 +83,23 @@ exports.optimizeShipments = async () => {
       truck: bestTruck.truck._id
     });
 
-    // Update shipment
     shipment.status = "assigned";
     await shipment.save();
 
-    // Update in-memory truck usage
     bestTruck.usedWeight += shipment.weight;
     bestTruck.usedVolume += shipment.volume;
 
-    // If truck hits utilization cap, mark unavailable
-    if (
-      bestTruck.usedWeight >= bestTruck.maxUsableWeight ||
-      bestTruck.usedVolume >= bestTruck.maxUsableVolume
-    ) {
-      bestTruck.truck.isAvailable = false;
-      await bestTruck.truck.save();
-    }
-
     assignments.push(booking);
+
+    explanations.push({
+      shipmentId: shipment._id,
+      evaluatedTrucks: evaluated,
+      finalDecision: {
+        truckId: bestTruck.truck._id,
+        reason: "Best-fit with safety and driver constraints"
+      }
+    });
   }
 
-  return assignments;
+  return { assignments, explanations };
 };

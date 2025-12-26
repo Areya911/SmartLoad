@@ -1,11 +1,13 @@
-const { optimizeShipments } = require("../services/optimizationService");
+const {
+  optimizeShipmentsWithExplainability
+} = require("../services/optimizationService");
 
-exports.runOptimization = async (req, res) => {
+exports.runOptimizationWithExplainability = async (req, res) => {
   try {
-    const results = await optimizeShipments();
+    const result = await optimizeShipmentsWithExplainability();
     res.status(200).json({
-      message: "Optimization completed",
-      assignments: results
+      message: "Optimization completed with explainability",
+      ...result
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

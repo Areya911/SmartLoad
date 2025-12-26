@@ -3,15 +3,13 @@ const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
 const { allowRoles } = require("../middleware/roleMiddleware");
-const {
-  runOptimization
-} = require("../controllers/optimizationController");
+const { updateLocation } = require("../controllers/locationController");
 
 router.post(
-  "/run-with-explain",
+  "/update",
   protect,
-  allowRoles("admin"),
-  runOptimizationWithExplainability
+  allowRoles("truck_owner"),
+  updateLocation
 );
 
 module.exports = router;
