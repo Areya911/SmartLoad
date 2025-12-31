@@ -1,42 +1,66 @@
-#root {
-  max-width: 1280px;
+/* Layout container */
+.container {
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  padding: 24px;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
+/* Cards (used everywhere) */
 .card {
-  padding: 2em;
+  background: #ffffff;
+  color: #1a1a1a;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.read-the-docs {
-  color: #888;
+/* Warning / empty states */
+.warning {
+  color: #b00020;
+  font-weight: 600;
+}
+
+/* Confidence spacing helper */
+.confidence {
+  margin: 8px 0;
+}
+
+/* Tables (Truck comparison) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 0.9rem;
+}
+
+thead {
+  background-color: #f4f4f4;
+}
+
+th, td {
+  padding: 10px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+th {
+  font-weight: 600;
+  color: #333;
+}
+
+/* Highlight selected truck */
+tr.selected {
+  background-color: #e6ffe6;
+}
+
+/* Details / explainability toggle */
+details {
+  margin-top: 10px;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: #444;
 }

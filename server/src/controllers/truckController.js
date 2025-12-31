@@ -1,23 +1,23 @@
 const Truck = require("../models/Truck");
 
-// @desc    Create a truck
+// @desc    Create truck
 // @route   POST /api/trucks
-// @access  Truck Owner
+// @access  Admin / Truck Owner
 exports.createTruck = async (req, res) => {
   try {
     const {
       truckNumber,
+      truckType,
       capacityWeight,
-      capacityVolume,
-      truckType
+      capacityVolume
     } = req.body;
 
     const truck = await Truck.create({
-      owner: req.user._id,
+      owner: req.user._id, // 🔑 REQUIRED by schema
       truckNumber,
+      truckType,
       capacityWeight,
-      capacityVolume,
-      truckType
+      capacityVolume
     });
 
     res.status(201).json(truck);
@@ -31,7 +31,10 @@ exports.createTruck = async (req, res) => {
 // @access  Admin
 exports.getAllTrucks = async (req, res) => {
   try {
-    const trucks = await Truck.find().populate("owner", "name email");
+    const trucks = await Truck.find().populate(
+      "owner",
+      "name email"
+    );
     res.status(200).json(trucks);
   } catch (error) {
     res.status(500).json({ message: error.message });

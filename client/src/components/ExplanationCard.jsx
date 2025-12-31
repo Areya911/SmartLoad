@@ -1,23 +1,49 @@
 import ConfidenceBadge from "./ConfidenceBadge";
+import TruckComparisonTable from "./TruckComparisonTable";
 
 export default function ExplanationCard({ explanation }) {
+  if (!explanation) {
+    return null;
+  }
+
+  const {
+    shipmentId,
+    shipmentName,
+    finalDecision,
+    confidence,
+    evaluatedTrucks = []
+  } = explanation;
+
   return (
     <div className="card">
-      <h3>Shipment {explanation.shipmentId}</h3>
+      <h3>
+        Shipment: {shipmentName || shipmentId}
+      </h3>
 
-      <p>
-        Assigned Truck: <b>{explanation.finalDecision.truckId}</b>
-      </p>
+      {finalDecision?.truckNumber ? (
+        <>
+          <p>
+            Assigned Truck:{" "}
+            <b>{finalDecision.truckNumber}</b>
+          </p>
 
-      <ConfidenceBadge confidence={explanation.confidence} />
+          {/* Only show confidence if valid */}
+          {typeof confidence === "number" && (
+            <ConfidenceBadge confidence={confidence} />
+          )}
 
-      <ul>
-        {explanation.evaluatedTrucks.map((t) => (
-          <li key={t.truckId}>
-            {t.truckType} → {t.reason} ({t.details})
-          </li>
-        ))}
-      </ul>
+          {evaluatedTrucks.length > 0 && (
+            <TruckComparisonTable
+              trucks={evaluatedTrucks}
+              selectedTruckId={finalDecision.truckId}
+            />
+          )}
+        </>
+      ) : (
+        <p className="warning">
+          No suitable truck found
+        </p>
+      )}
     </div>
   );
 }

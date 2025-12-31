@@ -1,6 +1,12 @@
-export const runOptimizationWithExplain = async (token) => {
+const API_BASE = "http://localhost:5000/api";
+
+/**
+ * Run shipment optimization with explainability
+ * Requires admin JWT token
+ */
+export async function runOptimizationWithExplain(token) {
   const res = await fetch(
-    "http://localhost:5000/api/optimize/run-with-explain",
+    `${API_BASE}/optimize/run-with-explain`,
     {
       method: "POST",
       headers: {
@@ -8,5 +14,6 @@ export const runOptimizationWithExplain = async (token) => {
       }
     }
   );
+
   return res.json();
-};
+}

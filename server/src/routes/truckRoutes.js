@@ -9,7 +9,7 @@ const {
 } = require("../controllers/truckController");
 
 // Truck owner adds truck
-router.post("/", protect, allowRoles("truck_owner"), createTruck);
+router.post("/", protect, allowRoles("admin","truck_owner"), createTruck);
 
 // Admin views all trucks
 router.get("/", protect, allowRoles("admin"), getAllTrucks);

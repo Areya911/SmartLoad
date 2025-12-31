@@ -1,4 +1,20 @@
 export default function ConfidenceBadge({ confidence }) {
+  if (typeof confidence !== "number") {
+    return (
+      <span
+        style={{
+          padding: "6px 10px",
+          borderRadius: "8px",
+          background: "gray",
+          color: "white",
+          fontWeight: "bold"
+        }}
+      >
+        Confidence N/A
+      </span>
+    );
+  }
+
   let color = "gray";
   let label = "Low";
 
@@ -24,4 +40,3 @@ export default function ConfidenceBadge({ confidence }) {
     </span>
   );
 }
-

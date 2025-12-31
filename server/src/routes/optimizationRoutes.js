@@ -3,8 +3,10 @@ const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
 const { allowRoles } = require("../middleware/roleMiddleware");
+
+// ✅ ADD THIS LINE
 const {
-  runOptimization
+  runOptimizationWithExplainability
 } = require("../controllers/optimizationController");
 
 router.post(
