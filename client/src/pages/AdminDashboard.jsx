@@ -2,7 +2,9 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   getAllTrucks,
-  getAllShipments
+  getAllShipments,
+  markInTransit,
+  markDelivered
 } from "../services/api";
 import { runOptimizationWithExplain } from "../services/optimizationApi";
 import ExplanationCard from "../components/ExplanationCard";
@@ -15,17 +17,14 @@ export default function AdminDashboard() {
   const [trucks, setTrucks] = useState([]);
   const [shipments, setShipments] = useState([]);
 
-  // Load trucks + shipments on page load
+  // Load trucks + shipments
+  const loadData = async () => {
+    if (!token) return;
+    setTrucks(await getAllTrucks(token));
+    setShipments(await getAllShipments(token));
+  };
+
   useEffect(() => {
-    async function loadData() {
-      if (!token) return;
-
-      const t = await getAllTrucks(token);
-      const s = await getAllShipments(token);
-
-      setTrucks(t);
-      setShipments(s);
-    }
     loadData();
   }, [token]);
 
@@ -33,6 +32,7 @@ export default function AdminDashboard() {
     setLoading(true);
     const res = await runOptimizationWithExplain(token);
     setResult(res);
+    await loadData(); // refresh status after optimization
     setLoading(false);
   };
 
@@ -64,6 +64,7 @@ export default function AdminDashboard() {
           <table>
             <thead>
               <tr>
+                <th>Name</th>
                 <th>Truck No</th>
                 <th>Type</th>
                 <th>Weight</th>
@@ -74,6 +75,7 @@ export default function AdminDashboard() {
             <tbody>
               {trucks.map((t) => (
                 <tr key={t._id}>
+                  <td>{t.name}</td>
                   <td>{t.truckNumber}</td>
                   <td>{t.truckType}</td>
                   <td>{t.capacityWeight}</td>
@@ -95,21 +97,47 @@ export default function AdminDashboard() {
           <table>
             <thead>
               <tr>
+                <th>Name</th>
                 <th>From</th>
                 <th>To</th>
                 <th>Weight</th>
                 <th>Volume</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {shipments.map((s) => (
                 <tr key={s._id}>
+                  <td>{s.name}</td>
                   <td>{s.source}</td>
                   <td>{s.destination}</td>
                   <td>{s.weight}</td>
                   <td>{s.volume}</td>
                   <td>{s.status}</td>
+                  <td>
+                    {s.status === "assigned" && (
+                      <button
+                        onClick={async () => {
+                          await markInTransit(s._id, token);
+                          loadData();
+                        }}
+                      >
+                        Start Transit
+                      </button>
+                    )}
+
+                    {s.status === "in_transit" && (
+                      <button
+                        onClick={async () => {
+                          await markDelivered(s._id, token);
+                          loadData();
+                        }}
+                      >
+                        Mark Delivered
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -139,7 +167,7 @@ export default function AdminDashboard() {
       {/* OPTIMIZATION RESULTS */}
       {result?.explanations?.map((exp) => (
         <ExplanationCard
-          key={exp.shipmentId}
+          key={exp.shipment.id}
           explanation={exp}
         />
       ))}

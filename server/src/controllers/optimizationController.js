@@ -13,3 +13,18 @@ exports.runOptimizationWithExplainability = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const OptimizationRun = require("../models/OptimizationRun");
+
+
+exports.getOptimizationHistory = async (req, res) => {
+  try {
+    const history = await OptimizationRun.find()
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    res.json(history);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};

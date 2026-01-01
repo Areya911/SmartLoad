@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { protect } = require("../middleware/authMiddleware");
 const { allowRoles } = require("../middleware/roleMiddleware");
+const { getDriverAssignments } = require("../controllers/bookingController");
 const {
   startTrip,
   completeTrip,
@@ -28,6 +29,13 @@ router.patch(
   protect,
   allowRoles("truck_owner"),
   completeTrip
+);
+
+router.get(
+  "/my-assignments",
+  protect,
+  allowRoles("truck_owner"),
+  getDriverAssignments
 );
 
 module.exports = router;

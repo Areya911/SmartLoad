@@ -71,3 +71,38 @@ export async function getAllShipments(token) {
   });
   return res.json();
 }
+
+export async function markInTransit(shipmentId, token) {
+  const res = await fetch(
+    `http://localhost:5000/api/shipments/${shipmentId}/in-transit`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+  return res.json();
+}
+
+export async function markDelivered(shipmentId, token) {
+  const res = await fetch(
+    `http://localhost:5000/api/shipments/${shipmentId}/delivered`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+  return res.json();
+}
+
+export async function getDriverAssignments(token) {
+  const res = await fetch("http://localhost:5000/api/bookings/my-assignments", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  return res.json();
+}

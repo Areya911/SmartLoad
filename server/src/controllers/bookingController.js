@@ -38,3 +38,21 @@ exports.getDriverBookings = async (req, res) => {
 
   res.json(bookings);
 };
+
+exports.getDriverAssignments = async (req, res) => {
+  const bookings = await Booking.find()
+    .populate({
+      path: "truck",
+      match: { owner: req.user._id },
+      select: "name truckNumber"
+    })
+    .populate({
+      path: "shipment",
+      select: "name source destination status"
+    });
+
+  // Remove bookings not owned by driver
+  const filtered = bookings.filter(b => b.truck);
+
+  res.json(filtered);
+};

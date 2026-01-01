@@ -7,6 +7,11 @@ const truckSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
+      name: {
+      type: String,
+      required: true,
+      trim: true
+    },
     truckNumber: {
       type: String,
       required: true,

@@ -6,6 +6,7 @@ const Truck = require("../models/Truck");
 exports.createTruck = async (req, res) => {
   try {
     const {
+      name,
       truckNumber,
       truckType,
       capacityWeight,
@@ -14,6 +15,7 @@ exports.createTruck = async (req, res) => {
 
     const truck = await Truck.create({
       owner: req.user._id, // 🔑 REQUIRED by schema
+      name,
       truckNumber,
       truckType,
       capacityWeight,

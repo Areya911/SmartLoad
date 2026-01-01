@@ -23,10 +23,12 @@ export default function TruckComparisonTable({
                   : "transparent"
             }}
           >
-            <td>{t.truckNumber}</td>
+            <td>
+              {t.truckName} ({t.truckNumber})
+            </td>
             <td>{t.truckType}</td>
+            <td>{t.status}</td>
             <td>{t.reason}</td>
-            <td>{t.details}</td>
           </tr>
         ))}
       </tbody>
