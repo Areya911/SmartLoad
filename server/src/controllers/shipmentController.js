@@ -96,3 +96,66 @@ exports.markDelivered = async (req, res) => {
 
   res.json({ message: "Shipment delivered and truck released" });
 };
+
+// Get shipments created by logged-in user
+
+// @desc    Get shipments created by logged-in shipment owner
+// @route   GET /api/shipments/my
+// @access  Shipment Owner
+exports.getMyShipments = async (req, res) => {
+  try {
+    const shipments = await Shipment.find({
+      createdBy: req.user._id
+    });
+    res.json(shipments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// Update shipment (pending only)
+exports.updateShipment = async (req, res) => {
+  const shipment = await Shipment.findById(req.params.id);
+
+  if (!shipment) {
+    return res.status(404).json({ message: "Shipment not found" });
+  }
+
+  if (!shipment.createdBy.equals(req.user._id)) {
+    return res.status(403).json({ message: "Not your shipment" });
+  }
+
+  if (shipment.status !== "pending") {
+    return res
+      .status(400)
+      .json({ message: "Cannot edit shipment once assigned" });
+  }
+
+  Object.assign(shipment, req.body);
+  await shipment.save();
+
+  res.json(shipment);
+};
+
+// Delete shipment (pending only)
+exports.deleteShipment = async (req, res) => {
+  const shipment = await Shipment.findById(req.params.id);
+
+  if (!shipment) {
+    return res.status(404).json({ message: "Shipment not found" });
+  }
+
+  if (!shipment.createdBy.equals(req.user._id)) {
+    return res.status(403).json({ message: "Not your shipment" });
+  }
+
+  if (shipment.status !== "pending") {
+    return res
+      .status(400)
+      .json({ message: "Cannot delete shipment once assigned" });
+  }
+
+  await shipment.deleteOne();
+  res.json({ message: "Shipment deleted" });
+};

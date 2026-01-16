@@ -106,3 +106,12 @@ export async function getDriverAssignments(token) {
   });
   return res.json();
 }
+
+export const getMyTrucks = async (token) => {
+  const res = await fetch("http://localhost:5000/api/trucks/my", {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+  return res.json();
+};

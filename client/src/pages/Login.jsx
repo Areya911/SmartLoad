@@ -1,24 +1,54 @@
 import { useNavigate } from "react-router-dom";
 import { loginUser } from "../services/api";
+import { useState } from "react";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [selectedRole, setSelectedRole] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const form = e.target;
+    if (!selectedRole) {
+      alert("Please choose how you want to login");
+      return;
+    }
 
+    const form = e.target;
     const email = form.email.value;
     const password = form.password.value;
 
     const res = await loginUser(email, password);
 
-    if (res.token) {
-      localStorage.setItem("token", res.token);
-      navigate("/dashboard");
-    } else {
+    if (!res.token) {
       alert(res.message || "Login failed");
+      return;
     }
+
+    // 🔐 SECURITY CHECK
+    
+    const { role } = res.user;
+
+// 🔐 SECURITY CHECK
+    if (role !== selectedRole) {
+      alert(
+        `You are registered as "${role}". You cannot login as "${selectedRole}".`
+      );
+      return;
+    }
+
+    // Save auth
+    localStorage.setItem("token", res.token);
+    localStorage.setItem("role", role);
+
+    // 🚦 Role-based routing
+    if (role === "admin") {
+      navigate("/admin");
+    } else if (role === "truck_owner") {
+      navigate("/truck-owner");
+    } else if (role === "shipment_owner") {
+      navigate("/shipment-owner");
+    }
+
   };
 
   return (
@@ -33,7 +63,8 @@ export default function Login() {
             placeholder="Email"
             required
           />
-
+ <br />
+  <br />
           <input
             name="password"
             type="password"
@@ -41,18 +72,32 @@ export default function Login() {
             required
           />
 
-          <button type="submit">Login</button>
-        </form>
+          <div style={{ marginTop: "20px" }}>
+            <button
+              type="submit"
+              onClick={() => setSelectedRole("admin")}
+            >
+              Login as Admin
+            </button>
+ <br />
+  <br />
 
-        <p style={{ marginTop: "10px" }}>
-          Don’t have an account?{" "}
-          <span
-            style={{ color: "blue", cursor: "pointer" }}
-            onClick={() => navigate("/signup")}
-          >
-            Signup
-          </span>
-        </p>
+            <button
+              type="submit"
+              onClick={() => setSelectedRole("truck_owner")}
+            >
+              Login as Truck Owner / Driver
+            </button>
+ <br />
+  <br />
+            <button
+              type="submit"
+              onClick={() => setSelectedRole("shipment_owner")}
+            >
+              Login as Shipment Owner
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

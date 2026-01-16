@@ -4,6 +4,9 @@ import Signup from "./pages/Signup";
 import AdminDashboard from "./pages/AdminDashboard";
 import CreateTruck from "./pages/CreateTruck";
 import CreateShipment from "./pages/CreateShipment";
+import TruckOwnerDashboard from "./pages/TruckOwnerDashboard";
+import ShipmentOwnerDashboard from "./pages/ShipmentOwnerDashboard";
+import "./styles/theme.css";
 
 export default function App() {
   return (
@@ -15,6 +18,9 @@ export default function App() {
         <Route path="/dashboard" element={<AdminDashboard />} />
         <Route path="/trucks/new" element={<CreateTruck />} />
         <Route path="/shipments/new" element={<CreateShipment />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/truck-owner" element={<TruckOwnerDashboard />} />
+        <Route path="/shipment-owner" element={<ShipmentOwnerDashboard />} />
       </Routes>
     </BrowserRouter>
   );

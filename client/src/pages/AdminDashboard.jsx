@@ -57,7 +57,7 @@ export default function AdminDashboard() {
 
       {/* TRUCK LIST */}
       <div className="card">
-        <h3>🚛 Trucks</h3>
+        <h3> Trucks</h3>
         {trucks.length === 0 ? (
           <p>No trucks created yet.</p>
         ) : (
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
 
       {/* SHIPMENT LIST */}
       <div className="card">
-        <h3>📦 Shipments</h3>
+        <h3> Shipments</h3>
         {shipments.length === 0 ? (
           <p>No shipments created yet.</p>
         ) : (
@@ -103,7 +103,7 @@ export default function AdminDashboard() {
                 <th>Weight</th>
                 <th>Volume</th>
                 <th>Status</th>
-                <th>Actions</th>
+                
               </tr>
             </thead>
             <tbody>
